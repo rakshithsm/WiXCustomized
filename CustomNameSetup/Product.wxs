@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Service" Language="1033" Version="1.0.0.0" Manufacturer="Rakshith POC" UpgradeCode="ec26b1aa-af07-4253-81bc-9193b02d3be9">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <Media Id="1" Cabinet="CustomNameService.cab" EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="CustomNameSetup" Level="1">
+      <ComponentRef Id="Executable"/>
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"/>
+    <Property Id="SERVICENAME" Value="SERVICENAME"/>
+    <UIRef Id="WixUI_InstallDir"/>
+
+    <CustomAction Id="SetProductName" Property="ProductName" Value="[SERVICENAME]" />
+    <InstallExecuteSequence>
+      <Custom Action="SetProductName" After="ServiceNameCustomAction"/>
+      <Custom Action='ServiceNameCustomAction' After='CostFinalize' >NOT Installed</Custom>
+      <Custom Action='ServiceNameUninstallCustomAction' Before='InstallInitialize' >Installed</Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+
+  <Fragment>
+    <Binary Id="CustomActionBinary" SourceFile="$(var.ServiceNameCustomAction.TargetDir)$(var.ServiceNameCustomAction.TargetName).CA.dll"/>
+    <CustomAction Id="ServiceNameCustomAction" BinaryKey="CustomActionBinary" DllEntry="ShowServiceNameCustomDialog" Execute="immediate" Return="check"/>
+  </Fragment>
+
+  <Fragment>
+    <Binary Id="CustomActionUninstallBinary" SourceFile="$(var.ServiceNameCustomAction.TargetDir)$(var.ServiceNameCustomAction.TargetName).CA.dll"/>
+    <CustomAction Id="ServiceNameUninstallCustomAction" BinaryKey="CustomActionUninstallBinary" DllEntry="UninstallServiceCustomAction" Execute="immediate" Return="check"/>
+  </Fragment>
+
+  <Fragment>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLDIR" Name="Custom Name">
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="Executable" Guid="4E24B940-FF5C-42AF-8BBF-6445D45B2E6F">
+        <File Id="Executable" Name="CustomNameService.exe" Source="..\CustomNameService\bin\Debug\CustomNameService.exe" KeyPath="yes" />
+        <ServiceInstall Id="ServiceInstaller" Type="ownProcess" Vital="yes" Name="[SERVICENAME]" DisplayName="[SERVICENAME]" Description="ZZTOP : A Custom Service" Start="auto" Account="LocalSystem" ErrorControl="ignore" Interactive="no"/>
+        <ServiceControl Id="ServiceRemove" Name="CustomNameService" Stop="both" Remove="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+</Wix>
